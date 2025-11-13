@@ -40,9 +40,13 @@ class Settings(BaseSettings):
     # Production settings
     secret_key: str = "your-secret-key-change-in-production"
     
+    # Optional environment field (for backward compatibility)
+    environment: Optional[str] = "development"
+    
     class Config:
         env_file = ".env"
         case_sensitive = False
+        extra = "ignore"  # Allow extra fields in environment
     
     @property
     def effective_database_url(self) -> str:
