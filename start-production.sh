@@ -1,30 +1,36 @@
 #!/bin/bash
+# Production startup script for Render.com
 
-# Production startup script for Heroku/Render deployment
+set -e
 
-# Install dependencies if not already installed
-pip install --upgrade pip
-pip install -r requirements.txt
+echo "🚀 Starting Fulfil Product Importer..."
 
-# Create uploads directory if it doesn't exist
+# Create uploads directory
 mkdir -p uploads
 
-# Run database migrations (if using Alembic)
-# alembic upgrade head
+# Initialize database
+echo "🗄️ Initializing database..."
+python -c "
+import asyncio
+from app.db.database import init_db
 
-echo "Starting Fulfil Product Importer..."
-echo "Environment: ${NODE_ENV:-production}"
-echo "Port: ${PORT:-8000}"
+async def setup():
+    try:
+        await init_db()
+        print('✅ Database initialized successfully')
+    except Exception as e:
+        print(f'⚠️ Database initialization warning: {e}')
 
-# Start the application
-if [ "$DYNO" = "web.1" ] || [ "$RENDER_SERVICE_TYPE" = "web" ]; then
-    echo "Starting web server..."
-    uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}
-elif [ "$DYNO" = "worker.1" ] || [ "$RENDER_SERVICE_TYPE" = "worker" ]; then
-    echo "Starting Celery worker..."
-    celery -A app.tasks.celery_app worker --loglevel=info --concurrency=2
-else
-    # Default to web server
-    echo "Starting web server (default)..."
-    uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}
-fi
+asyncio.run(setup())
+"
+
+# Start Celery worker in background
+echo "⚙️ Starting background worker..."
+celery -A app.tasks.import_tasks worker --loglevel=info --concurrency=1 &
+
+# Give worker a moment to start
+sleep 3
+
+# Start web server
+echo "🌐 Starting web server on port ${PORT:-8000}..."
+exec uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}
