@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Delete Function Test</title>
+    <script>
+        // Same function as in main app.js
+        const API_V1 = 'http://localhost:8000/api/v1';
+        
+        function deleteProduct(productId, productName) {
+            if (!productName) {
+                productName = 'this product';
+            }
+            
+            const confirmed = confirm(`Are you sure you want to delete "${productName}"? This action cannot be undone.`);
+            
+            if (confirmed) {
+                fetch(`${API_V1}/products/${productId}`, {
+                    method: 'DELETE'
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        return response.json().then(err => Promise.reject(err));
+                    }
+                    return response.json();
+                })
+                .then(result => {
+                    alert('Product deleted successfully!');
+                    location.reload(); // Refresh page
+                })
+                .catch(error => {
+                    console.error('Error deleting product:', error);
+                    alert(error.detail || 'Error deleting product');
+                });
+            }
+        }
+        
+        // Test function
+        function testDelete() {
+            // Test with sample data
+            deleteProduct(123, 'Test Product');
+        }
+    </script>
+</head>
+<body>
+    <h1>Delete Function Test</h1>
+    <p>This page tests the delete function with proper parameters.</p>
+    <button onclick="deleteProduct(2210073, 'MacBook Air M3')">Test Delete with Product Name</button>
+    <button onclick="deleteProduct(2210074)">Test Delete without Product Name</button>
+</body>
+</html>

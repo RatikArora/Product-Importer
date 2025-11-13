@@ -84,17 +84,20 @@
             background: linear-gradient(135deg, #ebf3fd, #f8fbff);
             transition: all 0.3s ease;
             cursor: pointer;
+            position: relative;
         }
 
         .file-drop-zone:hover {
             border-color: var(--primary-color);
             background: linear-gradient(135deg, #d6eaff, #ebf3fd);
             transform: scale(1.02);
+            box-shadow: 0 8px 25px rgba(52, 152, 219, 0.15);
         }
 
         .file-drop-zone.dragover {
             border-color: var(--success-color);
             background: linear-gradient(135deg, #d5f4e6, #fafefe);
+            transform: scale(1.05);
         }
 
         .progress-container {
