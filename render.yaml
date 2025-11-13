@@ -72,6 +72,7 @@ services:
   - type: redis
     name: fulfil-redis
     plan: free
+    ipAllowList: []
 
 databases:
   - name: fulfil-db
