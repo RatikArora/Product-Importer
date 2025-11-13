@@ -1,2 +1,3 @@
-web: ./venv/bin/uvicorn app.main:app --host 0.0.0.0 --port $PORT
-worker: ./venv/bin/celery -A app.tasks.celery_app worker --loglevel=info --concurrency=2
+web: uvicorn app.main:app --host 0.0.0.0 --port $PORT --workers 1
+worker: celery -A app.tasks.import_tasks worker --loglevel=info --concurrency=1
+release: python -c "import asyncio; from app.db.database import init_db; asyncio.run(init_db())"

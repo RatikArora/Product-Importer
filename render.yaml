@@ -1,0 +1,80 @@
+services:
+  # Web Service
+  - type: web
+    name: fulfil-product-importer-web
+    env: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: fulfil-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: fulfil-redis
+          property: connectionString
+      - key: SECRET_KEY
+        generateValue: true
+      - key: CHUNK_SIZE
+        value: 500
+      - key: MAX_FILE_SIZE
+        value: 104857600
+      - key: CELERY_BROKER_URL
+        fromService:
+          type: redis
+          name: fulfil-redis
+          property: connectionString
+      - key: CELERY_RESULT_BACKEND
+        fromService:
+          type: redis
+          name: fulfil-redis
+          property: connectionString
+
+  # Background Worker Service
+  - type: worker
+    name: fulfil-product-importer-worker
+    env: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: celery -A app.tasks.import_tasks worker --loglevel=info
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: fulfil-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: fulfil-redis
+          property: connectionString
+      - key: SECRET_KEY
+        generateValue: true
+      - key: CHUNK_SIZE
+        value: 500
+      - key: MAX_FILE_SIZE
+        value: 104857600
+      - key: CELERY_BROKER_URL
+        fromService:
+          type: redis
+          name: fulfil-redis
+          property: connectionString
+      - key: CELERY_RESULT_BACKEND
+        fromService:
+          type: redis
+          name: fulfil-redis
+          property: connectionString
+
+databases:
+  - name: fulfil-db
+    databaseName: fulfil_products
+    user: fulfil_user
+    plan: free
+
+services:
+  - type: redis
+    name: fulfil-redis
+    plan: free
