@@ -20,9 +20,9 @@ services:
       - key: SECRET_KEY
         generateValue: true
       - key: CHUNK_SIZE
-        value: 500
+        value: "500"
       - key: MAX_FILE_SIZE
-        value: 104857600
+        value: "104857600"
       - key: CELERY_BROKER_URL
         fromService:
           type: redis
@@ -54,9 +54,9 @@ services:
       - key: SECRET_KEY
         generateValue: true
       - key: CHUNK_SIZE
-        value: 500
+        value: "500"
       - key: MAX_FILE_SIZE
-        value: 104857600
+        value: "104857600"
       - key: CELERY_BROKER_URL
         fromService:
           type: redis
@@ -68,13 +68,13 @@ services:
           name: fulfil-redis
           property: connectionString
 
+  # Redis Service
+  - type: redis
+    name: fulfil-redis
+    plan: free
+
 databases:
   - name: fulfil-db
     databaseName: fulfil_products
     user: fulfil_user
-    plan: free
-
-services:
-  - type: redis
-    name: fulfil-redis
     plan: free
