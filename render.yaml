@@ -45,9 +45,3 @@ databases:
     databaseName: fulfil_products
     user: fulfil_user
     plan: free
-
-databases:
-  - name: fulfil-db
-    databaseName: fulfil_products
-    user: fulfil_user
-    plan: free
