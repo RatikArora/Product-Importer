@@ -1,0 +1,96 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: fulfil_postgres
+    environment:
+      POSTGRES_DB: fulfil_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: fulfil_secure_password_2024!
+      POSTGRES_HOST_AUTH_METHOD: trust
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+    networks:
+      - fulfil_network
+
+  redis:
+    image: redis:7-alpine
+    container_name: fulfil_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+    networks:
+      - fulfil_network
+
+  web:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    container_name: fulfil_web
+    environment:
+      - DATABASE_URL=postgresql://postgres:fulfil_secure_password_2024!@postgres:5432/fulfil_db
+      - REDIS_URL=redis://redis:6379
+      - ENVIRONMENT=production
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./uploads:/app/uploads
+      - ./logs:/app/logs
+    depends_on:
+      - postgres
+      - redis
+    restart: unless-stopped
+    networks:
+      - fulfil_network
+
+  worker:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    container_name: fulfil_worker
+    command: celery -A app.tasks.import_tasks worker --loglevel=info --concurrency=2
+    environment:
+      - DATABASE_URL=postgresql://postgres:fulfil_secure_password_2024!@postgres:5432/fulfil_db
+      - REDIS_URL=redis://redis:6379
+      - ENVIRONMENT=production
+    volumes:
+      - ./uploads:/app/uploads
+      - ./logs:/app/logs
+    depends_on:
+      - postgres
+      - redis
+    restart: unless-stopped
+    networks:
+      - fulfil_network
+
+  nginx:
+    image: nginx:alpine
+    container_name: fulfil_nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - web
+    restart: unless-stopped
+    networks:
+      - fulfil_network
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  fulfil_network:
+    driver: bridge
